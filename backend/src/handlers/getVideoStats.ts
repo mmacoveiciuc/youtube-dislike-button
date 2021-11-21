@@ -33,7 +33,10 @@ const GetVideoStats = async (request: Request): Promise<Response> => {
         return new Response(body, { headers, status: 400 })
     }
 
-    const body = JSON.stringify({ dislikes: videoStats.items[0].statistics.dislikeCount })
+    const body = JSON.stringify({
+        dislikes: videoStats.items[0].statistics.dislikeCount,
+        likes: videoStats.items[0].statistics.likeCount
+    })
     return new Response(body, { headers, status: 200 })
 };
 

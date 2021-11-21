@@ -5,6 +5,7 @@ const API_ROOT = "https://backend.nafdev.workers.dev/api";
 const PRIMARY_VIDEO_CONTAINER = "ytd-watch-flexy";
 const PRIMARY_VIDEO_INFO_TAG = "ytd-video-primary-info-renderer";
 const MENU_RENDERER_TAG = "ytd-menu-renderer";
+const TOP_LEVEL_BUTTONS_ID = "top-level-buttons-computed";
 const FEEDBACK_BUTTONS_TAG = "ytd-toggle-button-renderer";
 const YT_FORMATTED_STRING_TAG = "yt-formatted-string";
 
@@ -25,6 +26,7 @@ let primaryVideoContainer;
 let primaryVideoInfo; 
 // Contains the right-hand side menu (like, dislike, share buttons etc...)
 let menuRenderer;
+let buttonMenu;
 // Contains the like and dislike buttons
 let feedbackButtons;
 
@@ -34,6 +36,13 @@ let dislikeButtonTextContainer;
 
 // For a loaded page, this will observe DOM changes to the video player.
 let videoContainerObserver;
+
+const likeDislikeBar = document.createElement("div");
+likeDislikeBar.style = "position: absolute; bottom: -4px; width: 150px; height: 3px; background-color: #606060;";
+likeDislikeBar.id = "yt-dislike-button-ratio"
+const likeRatio = document.createElement("div");
+likeRatio.style = "width: 50%; height: 3px; background-color: #919191;"
+likeDislikeBar.appendChild(likeRatio);
 
 function getVideoStats(id) {
     const headers = new Headers({
@@ -92,6 +101,17 @@ function formatDislikeCount(dislikes) {
     return formattedDislike;
 }
 
+// Updates the inserted like/dislike ratio in the DOM
+function updateLikeDislikeRatio(likes, dislikes) {
+    // Update the bar width
+    const likeButtonRef = feedbackButtons[0];
+    const dislikeButtonRef = feedbackButtons[1];
+    likeDislikeBar.style.width = likeButtonRef.offsetWidth + dislikeButtonRef.offsetWidth + 10 + "px";
+    // Now update the ratio bar ratio
+    const likeDislikeRatioPercent = ((likes/(likes+dislikes))*100).toFixed(1);
+    likeRatio.style.width = likeDislikeRatioPercent + "%";
+}
+
 // Updates the dislike count in the DOM. To call this function, first make sure
 // the handles to all DOM elements are set.
 async function updateDislikeCount() {
@@ -101,10 +121,13 @@ async function updateDislikeCount() {
     // Try to get the video from YouTube's API, and set the count
     try {
         const videoStats = await getVideoStats(videoId);
-        const { error, dislikes } = videoStats;
+        const { error, dislikes, likes } = videoStats;
+        const parsedLikes = parseInt(likes);
+        const parsedDislikes = parseInt(dislikes);
         // Make sure only one video is returned
         if (!error) {
-            dislikeButtonTextContainer.innerHTML = formatDislikeCount(parseInt(dislikes));
+            dislikeButtonTextContainer.innerHTML = formatDislikeCount(parsedDislikes);
+            updateLikeDislikeRatio(parsedLikes, parsedDislikes);
         } else {
             console.error(`YouTube API returned no results for video with id=${videoId}`);
         }
@@ -118,10 +141,14 @@ async function updateDislikeCount() {
 function setDOMHandles() {
     primaryVideoInfo = document.getElementsByTagName(PRIMARY_VIDEO_INFO_TAG)[0];
     menuRenderer = primaryVideoInfo.getElementsByTagName(MENU_RENDERER_TAG)[0];
+    buttonMenu = menuRenderer.querySelector(`#${TOP_LEVEL_BUTTONS_ID}`);
     feedbackButtons = menuRenderer.getElementsByTagName(FEEDBACK_BUTTONS_TAG);
 
     dislikeButton = feedbackButtons[1];
     dislikeButtonTextContainer = dislikeButton.getElementsByTagName(YT_FORMATTED_STRING_TAG)[0];
+
+    // Set the ratio bar
+    menuRenderer.insertBefore(likeDislikeBar, menuRenderer.firstElementChild);
 
     // If we previously attatched a mutation observer to the dislike button, we
     // should free it before recreating.
@@ -144,29 +171,17 @@ function setDOMHandles() {
     videoContainerObserver.observe(primaryVideoContainer, { attributes: true });
 }
 
-// When the page is loaded the dislike button, alongside many other elements,
-// are loaded asynchronously. When we first load the page we look for the
-// primary video info tag to appear before we attach our observers to the video
-// player.
-let observer = new MutationObserver((mutations) => {
-    mutations.forEach((mutation) => {
-      if (!mutation.addedNodes) return;
-  
-      for (let i = 0; i < mutation.addedNodes.length; i++) {
-        let node = mutation.addedNodes[i];
-        // Called the first time the video loads, after this, this element will be cached.
-        if (node.nodeName === PRIMARY_VIDEO_INFO_TAG.toUpperCase()) {
-            setDOMHandles();
-            updateDislikeCount();
-        }
-      }
-    })
-})
-
-// Start listening to DOM mutations
-observer.observe(document.body, {
-    childList: true,
-    subtree: true,
-    attributes: true,
-    characterData: true
-});
+// Find when the video DOM elements we're looking for appear. This works a bit
+// better than a MutationObserver because we don't rely on the MutationObserver
+// calling observe() before the elements we're looking for are updated in the
+// DOM.
+const domLoadInterval = setInterval(() => {
+    primaryVideoInfo = document.getElementsByTagName(PRIMARY_VIDEO_INFO_TAG)[0];
+    menuRenderer = primaryVideoInfo && primaryVideoInfo.getElementsByTagName(MENU_RENDERER_TAG)[0];
+    feedbackButtons = menuRenderer && menuRenderer.getElementsByTagName(FEEDBACK_BUTTONS_TAG);
+    if (feedbackButtons) {
+        setDOMHandles();
+        updateDislikeCount();
+        clearInterval(domLoadInterval);
+    }
+}, 250);
