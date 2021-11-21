@@ -126,7 +126,7 @@ async function updateDislikeCount() {
         const parsedDislikes = parseInt(dislikes);
         // Make sure only one video is returned
         if (!error) {
-            dislikeButtonTextContainer.innerHTML = formatDislikeCount(parsedDislikes);
+            dislikeButtonTextContainer.textContent = formatDislikeCount(parsedDislikes);
             updateLikeDislikeRatio(parsedLikes, parsedDislikes);
         } else {
             console.error(`YouTube API returned no results for video with id=${videoId}`);

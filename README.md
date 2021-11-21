@@ -2,20 +2,29 @@
 
 # YouTube Dislike Button
 
-A simple Chrome extension and backend for retrieving the dislike count on YouTube videos. YouTube has not removed the dislike count from being returned from their API endpoints, and this extension makes use of that.
+A simple Chrome and Firefox extension with a backend for retrieving the dislike count on YouTube videos. YouTube has not removed the dislike count from being returned from their API endpoints, and this extension makes use of that.
 
 ### Running Extension Locally
 
-> This extension is currently pending approval in the Chrome Web Store, however, you can have it running locally in under a minute.
+> This extension is currently pending approval in the Chrome Web Store as well as Firefox AMO, however, you can have it running locally in under a minute.
 
-Running the extension locally is simple. First, download the source code contained in this repository.
-- Download the zip file from the releases, or `git pull`
-- Unzip the file
+Running the extension locally is simple.
+- First, download the source code for the browser you want to install the extension on (from the releases tab).
 
-Access the Chrome extension dashboard by typing the following into your browser
-- **chrome://extensions/**
+### For Chrome ...
 
-In the top right-hand corner click the **Developer mode** switch to toggle it on. In the top left-hand corner press the **Load unpacked** button, and open the directory called **chrome** in the folder your unzipped.
+- Unzip the file to a location you like.
+- Access the Chrome extension dashboard by typing the following into your Chrome search bar: **chrome://extensions/**
+- In the top right-hand corner click the **Developer mode** switch to toggle it on.
+- In the top left-hand corner press the **Load unpacked** button, and open the folder you unzipped
+
+### For Firefox ...
+
+> Note: Running debug add-ons on firefox persist only for the duration of the browser session. Waiting for the official add-on is recommended.
+
+Navigate to the Firefox add-ons tab
+- Menu > Add-ons and Themes > Settings Icon (Top Right) > Debug add-ons > Load Temporary Add-on
+- Choose the zip file you downloaded
 
 ### Issues or Improvements?
 

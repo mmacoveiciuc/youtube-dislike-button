@@ -1,5 +1,5 @@
 {
-    "manifest_version": 3,
+    "manifest_version": 2,
     "name": "YouTube Dislike Button",
     "version": "1.0.2",
     "description": "Displays the dislike count on YouTube videos.",
@@ -10,8 +10,6 @@
         "128": "/images/128x128.png"
     },
     "author": "Nafana",
-    "incognito": "split",
-    "offline_enabled": false,
     "content_scripts": [
         {
             "matches": [
@@ -22,5 +20,14 @@
                 "main.js"
             ]
         }
-    ]
+    ],
+    "permissions": [
+        "webRequest",
+        "*://backend.nafdev.workers.dev/*"
+    ],
+    "browser_specific_settings": {
+        "gecko": {
+          "id": "{5d9f599f-b659-4379-acae-e343b8351e4c}"
+        }
+    }
 }
