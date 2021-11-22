@@ -4,9 +4,13 @@
 
 A simple Chrome and Firefox extension with a backend for retrieving the dislike count on YouTube videos. YouTube has not removed the dislike count from being returned from their API endpoints, and this extension makes use of that.
 
-### Running Extension Locally
+## Download Official Extension
+- Firefox: https://addons.mozilla.org/en-CA/firefox/addon/nafana/
+- Chrome: *pending approval*
 
-> This extension is currently pending approval in the Chrome Web Store as well as Firefox AMO, however, you can have it running locally in under a minute.
+## Running Extension for Development
+
+> This extension is currently pending approval in the Chrome Web Store, however, you can have it running locally in under a minute.
 
 Running the extension locally is simple.
 - First, download the source code for the browser you want to install the extension on (from the releases tab).
