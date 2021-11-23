@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "YouTube Dislike Button",
-    "version": "1.0.2",
+    "version": "1.1.0",
     "description": "Displays the dislike count on YouTube videos.",
     "icons": {
         "16": "/images/16x16.png",

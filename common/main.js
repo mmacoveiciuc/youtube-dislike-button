@@ -8,6 +8,7 @@ const MENU_RENDERER_TAG = "ytd-menu-renderer";
 const TOP_LEVEL_BUTTONS_ID = "top-level-buttons-computed";
 const FEEDBACK_BUTTONS_TAG = "ytd-toggle-button-renderer";
 const YT_FORMATTED_STRING_TAG = "yt-formatted-string";
+const YT_FORMATTED_STRING_ACTIVE = "style-default-active";
 
 // Any element attributes we reference
 const VIDEO_ID_ATTRIBUTE = "video-id";
@@ -29,13 +30,18 @@ let menuRenderer;
 let buttonMenu;
 // Contains the like and dislike buttons
 let feedbackButtons;
-
 // Dislike button DOM handles
 let dislikeButton;
 let dislikeButtonTextContainer;
-
-// For a loaded page, this will observe DOM changes to the video player.
+// Observers for DOM elements
 let videoContainerObserver;
+let dislikeTextObserver;
+
+// Has the user disliked the current video?
+let hasDislikedCurrent = false;
+// How many likes/dislikes the current video has
+let currentLikes = 0;
+let currentDislikes = 0;
 
 const likeDislikeBar = document.createElement("div");
 likeDislikeBar.style = "position: absolute; bottom: -4px; width: 150px; height: 3px; background-color: #606060;";
@@ -112,6 +118,37 @@ function updateLikeDislikeRatio(likes, dislikes) {
     likeRatio.style.width = likeDislikeRatioPercent + "%";
 }
 
+// Updates the text inside the dislike button
+function updateDislikeText(dislikes) {
+    dislikeButtonTextContainer.textContent = formatDislikeCount(dislikes);
+}
+
+// Called when the user has pressed the dislike button
+function onUserPressDislikeButton() {
+    hasDislikedCurrent = true;
+    currentDislikes += 1;
+    updateFeedbackUI(currentLikes, currentDislikes);
+}
+
+// Called when the user unpresses the dislike button
+function onUserUnpressDislikeButton() {
+    hasDislikedCurrent = false;
+    if (currentDislikes >= 1) {
+        currentDislikes -= 1;
+    }
+    updateFeedbackUI(currentLikes, currentDislikes);
+}
+
+// Updates the dislike button and ratios
+function updateFeedbackUI(likes, dislikes) {
+    updateDislikeText(dislikes);
+    updateLikeDislikeRatio(likes, dislikes);
+}
+
+function hasUserDislikedCurrentVideo() {
+    return dislikeButtonTextContainer.classList.contains(YT_FORMATTED_STRING_ACTIVE);
+}
+
 // Updates the dislike count in the DOM. To call this function, first make sure
 // the handles to all DOM elements are set.
 async function updateDislikeCount() {
@@ -124,10 +161,11 @@ async function updateDislikeCount() {
         const { error, dislikes, likes } = videoStats;
         const parsedLikes = parseInt(likes);
         const parsedDislikes = parseInt(dislikes);
+        currentLikes = parsedLikes;
+        currentDislikes = parsedDislikes;
         // Make sure only one video is returned
         if (!error) {
-            dislikeButtonTextContainer.textContent = formatDislikeCount(parsedDislikes);
-            updateLikeDislikeRatio(parsedLikes, parsedDislikes);
+            updateFeedbackUI(parsedLikes, parsedDislikes);
         } else {
             console.error(`YouTube API returned no results for video with id=${videoId}`);
         }
@@ -146,6 +184,31 @@ function setDOMHandles() {
 
     dislikeButton = feedbackButtons[1];
     dislikeButtonTextContainer = dislikeButton.getElementsByTagName(YT_FORMATTED_STRING_TAG)[0];
+    
+    // Check if the user has disliked this video
+    hasDislikedCurrent = hasUserDislikedCurrentVideo();
+    if (dislikeTextObserver) {
+        console.log(dislikeTextObserver);
+        dislikeTextObserver.disconnect();
+    }
+    // Add a listener to update our dislike count if the user dislikes
+    dislikeTextObserver = new MutationObserver((mutationsList) => {
+        mutationsList.forEach(mutation => {
+            // Watch for the text receiving a active class, indicating a dislike
+            if (mutation.attributeName !== 'class') return;
+            
+            if (mutation.target.classList.contains(YT_FORMATTED_STRING_ACTIVE)) {
+                if (!hasDislikedCurrent) {
+                    onUserPressDislikeButton();
+                }
+            } else {
+                if (hasDislikedCurrent) {
+                    onUserUnpressDislikeButton();   
+                }
+            }
+        });
+    });
+    dislikeTextObserver.observe(dislikeButtonTextContainer, { attributes: true });
 
     // Set the ratio bar
     menuRenderer.insertBefore(likeDislikeBar, menuRenderer.firstElementChild);
@@ -159,9 +222,10 @@ function setDOMHandles() {
     primaryVideoContainer = document.getElementsByTagName(PRIMARY_VIDEO_CONTAINER)[0];
     // Add an observer which triggers whenever the attributes on the primary
     // video container changes.
-    videoContainerObserver = new MutationObserver(function(mutationsList) {
+    videoContainerObserver = new MutationObserver((mutationsList) => {
         mutationsList.forEach(mutation => {
             if (mutation.attributeName == VIDEO_ID_ATTRIBUTE) {
+                hasDislikedCurrent = hasUserDislikedCurrentVideo();
                 updateDislikeCount();
             }    
         })
