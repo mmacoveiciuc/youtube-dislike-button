@@ -6,7 +6,7 @@ A simple Chrome and Firefox extension with a backend for retrieving the dislike 
 
 ## Download Official Extension
 - Firefox: https://addons.mozilla.org/en-CA/firefox/addon/nafana/
-- Chrome: *pending approval*
+- Chrome: https://chrome.google.com/webstore/detail/youtube-dislike-button/jghhboniebpmadkfdiiidhbihpclgfhh
 
 ## Running Extension for Development
 
